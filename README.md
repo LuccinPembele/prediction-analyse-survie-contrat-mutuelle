@@ -1,5 +1,5 @@
 ## Prédiction et Analyse de Survie des Contrats de Mutuelle
-#Projet de data science appliqué au secteur de l’assurance : modélisation et prédiction du risque de résiliation des contrats à l’aide de méthodes d’analyse de survie (Kaplan-Meier et modèle de Cox) sous R
+Projet de data science appliqué au secteur de l’assurance : modélisation et prédiction du risque de résiliation des contrats à l’aide de méthodes d’analyse de survie (Kaplan-Meier et modèle de Cox) sous R
 
 Le Projet porte sur une analyse de la base de données "Duree_Mutelle.CSV" comportant 953 adhérents d'une mutuelle. L'objectif est de comprendre les facteurs determinants de la rupture de contrat. Les covariables qui vont être utilisé pour analyser leur infuence sont:
 
