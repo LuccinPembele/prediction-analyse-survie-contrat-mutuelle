@@ -18,6 +18,20 @@ L'analyse est structurée en deux étapes complémentaires :
    * Interprétation de l'effet propre de chaque variable, *toutes choses égales par ailleurs*.
    * Génération d'une courbe de survie prédite pour un profil type d'adhérent.
 
+
+## 📈 Résultats Clés (Modèle de Cox)
+
+Le modèle de Cox a permis d'isoler l'impact de chaque variable sur le risque de rupture de contrat :
+* **Âge :** Chaque année supplémentaire diminue le risque de résiliation de **2,85 %**.
+* **Sexe :** Les hommes présentent un risque inférieur de **38,12 %** par rapport aux femmes (avec une médiane de survie supérieure de près de 4 ans).
+* **Profession :** Le statut de cadre réduit le risque de résiliation de **85,93 %** (par rapport à la catégorie de référence des agriculteurs).
+* **Propriété :** À âge et profession strictement identiques, le fait d'être propriétaire augmente le risque de résiliation de **28,50 %**.
+
+###  Profils Types Identifiés
+* **Profil le plus fidèle :** Un homme âgé, cadre et locataire (non-propriétaire).
+* **Profil à fort risque de résiliation rapide :** Une femme jeune, non-cadre et propriétaire.
+
+  
 # Technologies Utilisées
 
 * **Langage :** R
