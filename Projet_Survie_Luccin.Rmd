@@ -1,0 +1,224 @@
+---
+---
+---
+
+# **Projet :** Analyse de la fidélité de 953 adhérents d'une mutuelle.
+
+Luccin Pembele
+
+## Introduction
+
+Le Projet porte sur une analyse de la base de données "Duree_Mutelle.CSV" comportant 953 adhérents d'une mutuelle. L'objectif est de comprendre les facteurs determinants de la rupture de contrat. Les covariables qui vont être utilisé pour analyser leur infuence sont:
+
+— AGE : en années. — PROP : est-ce que l’adhérent est propriétaire de son logement ? 1 Oui, 0 Non. — PROF : la catégorie socio-professionnelle qui contient huit modalités, codées de la façon suivante. 1 agriculteur, 2 artisan, 3 cadre, 4 profession intermédiaire, 5 employé, 6 ouvrier, 7 retraité, 8 autre. — HOMME : 1 si l’adhérent est un homme, 0 si c’est une femme.
+
+La variable d'interêt est la durée qui s'écoule entre le début de la souscription et la fin de l'observations.
+
+Nous allons effectuer pour ce projet des analyses non paramétrique (Kaplan-Meier, test du log-rank) pour comparer les courbes de survies et enfin nous allons effectuer le modèle de Cox pour quantifier l'impact des variables.
+
+```{r}
+rm(list=ls())
+
+# Chargement des données
+data=read.csv("Duree_Mutuelle.csv", sep=";")
+head(data)
+nrow(data)
+```
+
+```{r}
+data$DEBUT=as.numeric(gsub(",", ".", data$DEBUT))
+data$FINOBS=as.numeric(gsub(",", ".", data$FINOBS))
+data$PROP= as.factor(data$PROP)
+data$PROF= as.factor(data$PROF)
+data$HOMME= as.factor(data$HOMME)
+
+```
+
+```{r}
+head(data)
+
+```
+
+```{r}
+# Construction des variables de survie
+data$Tobs=data$FINOBS - data$DEBUT
+data$status=ifelse(data$FINOBS < 2015.80, 1, 0)
+
+
+```
+
+## Analyses non-paramétriques des données (estimateur de Kaplan-Meier, tests du log-rang etc.)
+
+```{r}
+# 2. Analyses non-paramétriques
+library(survival)
+```
+
+```{r}
+# Estimateur de Kaplan-Meier global
+KM_global=survfit(Surv(data$Tobs, data$status) ~ 1)
+plot(KM_global, mark.time = TRUE, xlab = "Temps", ylab = "Fonction de survie", main = "Estimateur de Kaplan-Meier global")
+summary(survfit(Surv(data$Tobs, data$status)~ 1), mark.time=TRUE)
+quantile(KM_global)
+
+```
+
+Sur l'estimateur global de Kaplan-Meier, on remarque qu'il y a une forte densité de censure vers la fin à partir de t=10. De plus, la probabilité de survie décroit au cours du temps. Globalement, 25% des adhérents rompent leur contrat avant 7.29 ans et 50% des adhérants rompent leur contrat avant 11.57 ans.
+
+En analysant l'estimateur de Kaplan-Meier de chaque covariable, on observe:
+
+```{r}
+# KM par propriétaire
+KM_PROP=survfit(Surv(data$Tobs, data$status) ~ data$PROP)
+plot(KM_PROP, mark.time = TRUE, col = c("red", "blue"), xlab = "Temps", ylab = "Fonction de survie")
+legend("topright", c("Non-propriétaire", "Propriétaire"), 
+       col = c("red", "blue"), lty = 1)
+
+
+# Test du log-rank 
+survdiff(Surv(data$Tobs, data$status) ~ data$PROP)
+
+
+quantile(KM_PROP)
+```
+
+Concernant, l'estimateur de Kaplan-Meier pour les propriétaires et non propriétaire, on observe graphiquement que la courbe de survie des propriétaires est quasiment la même avec celle des non propriétaires. Cela signifie que la probabilité de rester adhérents semble être quasiment la même chez les propriétaires et les non propriétaires. En analysant le test du Log-Rank,cela confirme que les fonctions de survie sont en effet égales car la p-valeur est très elevée avec p= 0.7, on doit, par conséquent, ne pas rejetter l'hypothèse nulle.
+
+Pour rappel, $$(H_0): S_\text{propriétaire}= S_\text{NonPropriétaire}$$ contre $$(H_1): S_\text{propriétaire}\neq S_\text{NonPropriétaire}$$
+
+En analysant les quantiles:
+
+-   25% des propriétaires adherents ont rompu leur contrat avant 7.18 ans.
+
+-   25% des non propriétaires adherents ont rompu leur contrat avant 7.29 ans.
+
+-   50% des propriétaires adherents ont rompu leur contrat avant 11.74 ans.
+
+-   50% des non propriétaires adherents ont rompu leur contrat avant 11.57 ans.
+
+    On retrouve des quantiles quasiment simulaires pour les deux groupes. Le fait d'être propriétaire ou non n'influe pas sur la fidélité de l'adhérent.
+
+```{r}
+
+# KM par sexe
+KM_sexe=survfit(Surv(data$Tobs, data$status) ~ data$HOMME)
+plot(KM_sexe, mark.time = TRUE, col = c("pink", "lightblue"), xlab = "Temps", ylab = "Fonction de survie")
+legend("topright", c("Femme", "Homme"), col = c("pink", "lightblue"), lty = 1)
+
+
+# Test du log-rank pour le sexe
+survdiff(Surv(data$Tobs, data$status) ~ data$HOMME)
+
+
+quantile(KM_sexe)
+
+```
+
+En regardant pour le sexe. On observe graphiquement, la courbe de survie des hommes et supérieur à celle des femmes donc la probabilité de rester adhérents chez les hommes est supérieur à celles des femmes.
+
+Le test du Log-Rank confirme cette analyse. Les courbes de survie sont en effet significativemnt differentes car la p-valeur est très faible avec p=6e-06, on rejette l'hypothèse nulle.\
+\
+En anlysant les quantiles:
+
+-   25% des hommes adherents ont rompu leur contrat avant 9.88 ans.
+
+-   25% des femmes adherentes ont rompu leur contrat avant 6.57 ans.
+
+-   50% des hommes adherents ont rompu leur contrat avant 14.84 ans.
+
+-   50% des femmes adherentes ont rompu leur contrat avant 10.92 ans.\
+
+    Les hommes maintinnent leurs contrats plus longtemps que les femmes avec un écart de 3 ans de plus chez les hommes au 1er quartile et 4 ans de plus chez les hommes à la médiane.\
+
+```{r}
+
+# KM par catégorie socio-professionnelle
+KM_PROF=survfit(Surv(data$Tobs, data$status) ~ data$PROF)
+couleur= rainbow(8)
+plot(KM_PROF, mark.time = TRUE, xlab = "Temps", 
+     ylab = "Fonction de survie", main = "Kaplan-Meier par catégorie socio-professionnelle", col=couleur)
+legend("topright", legend=levels(data$PROF), col = couleur, lty = 1)
+
+survdiff(Surv(data$Tobs, data$status) ~ data$PROF)
+
+quantile(KM_PROF)
+
+
+```
+
+En examinant les catégories sociaux-professionnelles, on observe graphiquement, tous les courbes de survie se superposent sauf 2 courbes de survie qui se distinguent. On parle des courbes de survie des cadres (3) et des retraités (7).
+
+Le test du Log-Rank valide cette analyse, il existe au moins une courbe de survie significativement différente des autres car la p-valeur est très faible avec p=\<2e-16.
+
+En analysant les quantiles:
+
+Globalement, 25% des adhérents ont rompu leur contrat avant 6-7 ans hormis les retraités, qui pour eux, 25% des adhérents ont rompu leur contrat avant 9.90 ans et les cadres, dont leur seuil à 25% n'est pas atteit à la fin de la période d'observation.
+
+## Implémentation d’un modèle de Cox
+
+```{r}
+# 3. Modèle de Cox
+coxph(Surv(data$Tobs, data$status) ~data$AGE +data$PROP + data$PROF + data$HOMME)
+
+
+(1-0.971523)*100
+(1-0.618719)*100
+(1-0.140671)*100
+(1.285043-1)*100
+```
+
+Dans le modèle de Cox, on observe que le modèle est globalement très significatif. Les variables Âge, Sexe, la profession Cadres (3) sont très significatives avec des p-valeur très faible.Ce qui nous confirme nos analyses non paramétrique. La variable propriétaire est aussi significatif à 5% avec une p-valeur de 0.0179, étonnant sachant que l'on a demontré, d'après le test du Log-Rank, le fait d'être propriétaire ou non n'influence pas la fidélité de l'adhérent.\
+\
+En analysant le modèle:
+
+-   Un augmentation d'une année de l'adhèrent diminue le risque de rupture de contrat de 2.8477%
+
+-   Le risque de rupture de contrat est diminué de 38, 12181% chez les hommes par rapport aux les femmes.
+
+-   Le risque de rupture de contrat est diminué de 85.9329% chez les cadres par rapport aux agriculteurs .
+
+-   Le risque de rupture de contrat est augmenté de 28.5043% chez les propriétaies par rapport aux non proprétaires.
+
+```{r}
+# Vérification des hypothèses (résidus de Schoenfeld)
+model_cox = coxph(Surv(Tobs, status) ~ AGE + PROP + PROF + HOMME, data = data)
+summary(model_cox)
+print(model_cox)
+
+(1-0.971523)*100
+(1-0.618719)*100
+(1-0.140671)*100
+(1.285043-1)*100
+
+```
+
+```{r}
+# Courbe de survie prédite pour un profil type
+new_data <- data.frame(
+  AGE = mean(data$AGE),
+  PROP = factor(1, levels = levels(data$PROP)),
+  PROF = factor(3, levels = levels(data$PROF)),
+  HOMME = factor(1, levels = levels(data$HOMME))
+)
+
+
+surv_fit = survfit(model_cox, newdata = new_data)
+plot(surv_fit, xlab = "Temps (années)", ylab = "Fonction de survie", 
+     main = "Courbe de survie prédite pour un profil type (Cadre, Homme, Propriétaire)")
+```
+
+## Conclusion
+
+D'après les analyses non paramétriques et le modèle de Cox, nous constatons que les hommes maintiennent leur contrat plus longtemps que les femmes, avec un écart de près de 4 ans sur les \*\*médianes de survie\*\* (14,84 ans pour les hommes contre 10,92 ans pour les femmes). Nous avons pu constater que les cadres ainsi que les retraités se distinguent par rapport aux autres catégories socioprofessionnelles. Cela nous a été confirmé sur les courbes de survie et le test du log-rank. Les cadres sont des clients qui résilient rarement tandis que les retraités sont des clients qui maintiennent leur contrat plus longtemps que les autres catégories (25% résilient avant 9,90 ans pour les retraités contre 6-7 ans pour les autres catégories).
+
+Les variables déterminantes identifiées par l'analyse non paramétrique sont : le sexe, le statut de cadre, de retraité et l'âge. En utilisant le modèle de Cox, nous avons pu déterminer réellement les variables déterminantes et quantifier leurs impacts :
+
+-   Plus l'adhérent est âgé, moins il risque de résilier (baisse du risque de 2,85% par an d'âge).
+
+-   Les hommes risquent moins de résilier que les femmes (risque diminué de 38,12%).
+
+-   Les cadres risquent moins de résilier que les autres catégories comme les agriculteurs (risque diminué de 85,93%).
+
+-   La vraie surprise provient de la variable "propriétaire". Alors que le test du log-rank indiquait que le fait d'être propriétaire ou non n'influençait pas la survie globale, elle devient significative dans le modèle de Cox, augmentant le risque de résiliation de 28,50%.
+
+Donc le profil d'un adhérent qui ne compte pas résilier est un homme âgé ayant un statut de cadre et qui est locataire (non-propriétaire). Le profil d'un adhérent qui compte résilier très rapidement est une femme jeune qui n'est pas cadre et qui est propriétaire.
