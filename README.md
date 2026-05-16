@@ -19,7 +19,7 @@ L'analyse est structurée en deux étapes complémentaires :
    * Génération d'une courbe de survie prédite pour un profil type d'adhérent.
 
 
-## 📈 Résultats Clés (Modèle de Cox)
+## Résultats Clés (Modèle de Cox)
 
 Le modèle de Cox a permis d'isoler l'impact de chaque variable sur le risque de rupture de contrat :
 * **Âge :** Chaque année supplémentaire diminue le risque de résiliation de **2,85 %**.
